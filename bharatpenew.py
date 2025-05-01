@@ -54,13 +54,13 @@ with open(csv_file, mode="w", newline="") as file:
     
     # Writing Header Row
     writer.writerow([
-        "ftpPath", "fileName", "key1", "vendor", "callType", "callDuration",
-        "ANI", "CREATED", "agentName", "fileSize", "ticketId"  # ticketId added
+        "ticketId", "ftpPath", "fileName", "key1", "vendor", "callType",
+        "callDuration", "ANI", "CREATED", "agentName", "fileSize"  # ticketId added
     ])
     
     # Writing Data Rows
     for row in records:
-        ftpPath, fileName, key1, vendor, callType, callDuration, ANI, CREATED, agentName, ticketId = row
+        ticketId, ftpPath, fileName, key1, vendor, callType, callDuration, ANI, CREATED, agentName = row
         
         fileName = os.path.basename(fileName)
 
@@ -76,8 +76,8 @@ with open(csv_file, mode="w", newline="") as file:
         fileSize = ""  # Placeholder
 
         writer.writerow([
-            ftpPath, fileName, key1, vendor, callType, callDuration,
-            ANI, CREATED, agentName, fileSize, ticketId
+            ticketId, ftpPath, fileName, key1, vendor, callType,
+            callDuration, ANI, CREATED, agentName, fileSize
         ])
 
 # Close connection

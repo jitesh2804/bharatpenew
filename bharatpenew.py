@@ -55,7 +55,7 @@ with open(csv_file, mode="w", newline="") as file:
     # Updated header with ticketId first
     writer.writerow([
         "ticketId", "ftpPath", "fileName", "key1", "vendor", "callType",
-        "callDuration", "ANI", "CREATED", "agentName", "fileSize"
+        "callDuration", "ANI", "CREATED", "agentID", "fileSize"
     ])
 
     # Writing rows

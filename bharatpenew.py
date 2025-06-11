@@ -26,7 +26,7 @@ cursor = conn.cursor()
 # Modified SQL: ticketId first
 query = f"""
 SELECT 
-    c.uniqueid AS ticketId,
+    c.phonenumber AS phonenumber,
     '{current_date}' AS ftpPath,
     r.recfilename AS fileName,
     r.accountcode AS key1,
@@ -54,13 +54,13 @@ with open(csv_file, mode="w", newline="") as file:
 
     # Updated header with ticketId first
     writer.writerow([
-        "ticketId", "ftpPath", "fileName", "key1", "vendor", "callType",
+        "phonenumber", "ftpPath", "fileName", "key1", "vendor", "callType",
         "callDuration", "ANI", "CREATED", "agentID", "fileSize"
     ])
 
     # Writing rows
     for row in records:
-        ticketId, ftpPath, fileName, key1, vendor, callType, callDuration, ANI, CREATED, agentName = row
+        phonenumber, ftpPath, fileName, key1, vendor, callType, callDuration, ANI, CREATED, agentName = row
 
         fileName = os.path.basename(fileName)
         callType = "OUTBOUND" if callType == "OUT" else "INBOUND" if callType == "IN" else callType
@@ -68,7 +68,7 @@ with open(csv_file, mode="w", newline="") as file:
         fileSize = ""  # Placeholder
 
         writer.writerow([
-            ticketId, ftpPath, fileName, key1, vendor, callType,
+            phonenumber, ftpPath, fileName, key1, vendor, callType,
             callDuration, ANI, CREATED, agentName, fileSize
         ])
 

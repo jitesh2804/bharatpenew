@@ -29,7 +29,7 @@ query = f"""
 SELECT 
     c.uniqueid AS ticketId,
     c.phonenumber AS phonenumber,
-    '{current_date}' AS ftpPath,
+    CURRENT_DATE AS ftpPath,
     r.recfilename AS fileName,
     r.accountcode AS key1,
     'COGENT' AS vendor,
@@ -38,14 +38,24 @@ SELECT
     c.phonenumber AS ANI,
     c.callstartdate AS CREATED,
     u.name AS agentName,
-    b.t1 As T1
-    COALESCE(hin.midnumber, eng.midnumber, tam.midnumber, tel.midnumber, kan.midnumber, mal.midnumber, ben.midnumber) AS midnumber
+    b.t1 AS T1,
+    COALESCE(
+        hin.midnumber, 
+        eng.midnumber, 
+        tam.midnumber, 
+        tel.midnumber, 
+        kan.midnumber, 
+        mal.midnumber, 
+        ben.midnumber
+    ) AS midnumber
 FROM cr_recording_log r
 JOIN cr_conn_cdr c 
     ON r.accountcode = c.accountcode 
-    AND c.callstartdate::DATE = CURRENT_DATE  
+    AND c.callstartdate::DATE = CURRENT_DATE
 LEFT JOIN ct_user u 
     ON c.agentid = u.id
+-- You reference b.t1 but b is never defined; if it’s a missing join, add it here:
+-- LEFT JOIN some_table b ON c.accountcode = b.accountcode
 LEFT JOIN hindiin_1688622587882_history hin
     ON hin.accountcode = c.accountcode
 LEFT JOIN englishin_1688622587882_history eng
@@ -61,6 +71,7 @@ LEFT JOIN malayalamin_1688622587882_history mal
 LEFT JOIN bengali_1688622587882_history ben
     ON ben.accountcode = c.accountcode
 WHERE r.eventdate::DATE = CURRENT_DATE;
+
 """
 
 cursor.execute(query)

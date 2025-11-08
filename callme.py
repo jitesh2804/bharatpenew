@@ -38,7 +38,15 @@ SELECT
     c.phonenumber AS ANI,
     c.callstartdate AS CREATED,
     u.name AS agentName,
-    b.t1 AS T1,
+    COALESCE(
+        hin.t1, 
+        eng.t1, 
+        tam.t1, 
+        tel.t1, 
+        kan.t1, 
+        mal.t1, 
+        ben.t1
+    ) AS T1,
     COALESCE(
         hin.midnumber, 
         eng.midnumber, 
@@ -54,8 +62,6 @@ JOIN cr_conn_cdr c
     AND c.callstartdate::DATE = CURRENT_DATE
 LEFT JOIN ct_user u 
     ON c.agentid = u.id
--- You reference b.t1 but b is never defined; if it’s a missing join, add it here:
--- LEFT JOIN some_table b ON c.accountcode = b.accountcode
 LEFT JOIN hindiin_1688622587882_history hin
     ON hin.accountcode = c.accountcode
 LEFT JOIN englishin_1688622587882_history eng
@@ -71,6 +77,7 @@ LEFT JOIN malayalamin_1688622587882_history mal
 LEFT JOIN bengali_1688622587882_history ben
     ON ben.accountcode = c.accountcode
 WHERE r.eventdate::DATE = CURRENT_DATE;
+
 
 """
 

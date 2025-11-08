@@ -38,7 +38,8 @@ SELECT
     c.phonenumber AS ANI,
     c.callstartdate AS CREATED,
     u.name AS agentName,
-    COALESCE(hin.midnumber, eng.midnumber, tam.midnumber, tel.midnumber, kan.midnumber, mal.midnumber) AS midnumber
+    b.t1 As T1
+    COALESCE(hin.midnumber, eng.midnumber, tam.midnumber, tel.midnumber, kan.midnumber, mal.midnumber, ben.midnumber) AS midnumber
 FROM cr_recording_log r
 JOIN cr_conn_cdr c 
     ON r.accountcode = c.accountcode 
@@ -57,6 +58,8 @@ LEFT JOIN kannadain_1688622587882_history kan
     ON kan.accountcode = c.accountcode
 LEFT JOIN malayalamin_1688622587882_history mal
     ON mal.accountcode = c.accountcode
+LEFT JOIN bengali_1688622587882_history ben
+    ON ben.accountcode = c.accountcode
 WHERE r.eventdate::DATE = CURRENT_DATE;
 """
 

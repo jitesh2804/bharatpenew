@@ -17,15 +17,14 @@ current_date = datetime.now().strftime("%Y%m%d")
 current_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 # CSV Filename
-
 csv_file = f"METADATA_CALLME_{current_timestamp}.csv"
 
 # Connect to PostgreSQL
 conn = psycopg2.connect(**db_params)
 cursor = conn.cursor()
 
-# Modified SQL: ticketId from cr_conn_cdr.uniqueid + midnumber from all _history tables
-query = f"""
+# SQL Query
+query = """
 SELECT 
     c.uniqueid AS ticketId,
     c.phonenumber AS phonenumber,
@@ -77,40 +76,41 @@ LEFT JOIN malayalamin_1688622587882_history mal
 LEFT JOIN bengali_1688622587882_history ben
     ON ben.accountcode = c.accountcode
 WHERE r.eventdate::DATE = CURRENT_DATE;
-
-
 """
 
+# Execute Query
 cursor.execute(query)
 records = cursor.fetchall()
 
-# Write CSV
-with open(csv_file, mode="w", newline="") as file:
+# Write to CSV
+with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
     writer = csv.writer(file)
 
-    # Updated header (ticketId first, midnumber last)
+    # Correct header
     writer.writerow([
         "ticketId", "phonenumber", "ftpPath", "fileName", "key1", "vendor", 
-        "callType", "callDuration", "ANI", "CREATED", "agentID", "fileSize", "T1", "midnumber"
+        "callType", "callDuration", "ANI", "CREATED", "agentName", "fileSize", "T1", "midnumber"
     ])
 
-    # Writing rows
+    # Write rows
     for row in records:
-        ticketId, phonenumber, ftpPath, fileName, key1, vendor, callType, callDuration, ANI, CREATED, agentName, T1, midnumber = row
+        (
+            ticketId, phonenumber, ftpPath, fileName, key1, vendor,
+            callType, callDuration, ANI, CREATED, agentName, T1, midnumber
+        ) = row
 
-        # Cleanup and formatting
         fileName = os.path.basename(fileName)
         callType = "OUTBOUND" if callType == "OUT" else "INBOUND" if callType == "IN" else callType
         callDuration = str(timedelta(seconds=int(callDuration))) if callDuration else "00:00:00"
-        fileSize = ""  # Placeholder for now
+        fileSize = ""  # Placeholder — can be filled later if needed
 
         writer.writerow([
-            ticketId, phonenumber, ftpPath, fileName, key1, vendor, callType,
-            callDuration, ANI, CREATED, agentName, fileSize, midnumber
+            ticketId, phonenumber, ftpPath, fileName, key1, vendor,
+            callType, callDuration, ANI, CREATED, agentName, fileSize, T1, midnumber
         ])
 
-# Close connections
+# Close DB Connection
 cursor.close()
 conn.close()
 
-print(f"CSV file '{csv_file}' has been created successfully with ticketId from uniqueid and midnumber from history tables.")
+print(f"✅ CSV file '{csv_file}' created successfully with T1 and midnumber columns.")

@@ -96,7 +96,7 @@ with open(csv_file, mode="w", newline="") as file:
 
     # Writing rows
     for row in records:
-        ticketId, phonenumber, ftpPath, fileName, key1, vendor, callType, callDuration, ANI, CREATED, agentName, midnumber = row
+        ticketId, phonenumber, ftpPath, fileName, key1, vendor, callType, callDuration, ANI, CREATED, agentName, T1, midnumber = row
 
         # Cleanup and formatting
         fileName = os.path.basename(fileName)

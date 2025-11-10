@@ -17,7 +17,7 @@ current_date = datetime.now().strftime("%Y%m%d")
 current_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 # CSV Filename
-csv_file = f"METADATA_CALLME_{current_timestamp}.csv"
+csv_file = f"bharatpe_{current_timestamp}.csv"
 
 # Connect to PostgreSQL
 conn = psycopg2.connect(**db_params)

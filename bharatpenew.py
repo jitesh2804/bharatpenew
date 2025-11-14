@@ -36,7 +36,7 @@ SELECT
     c.callduration AS callDuration,
     c.phonenumber AS ANI,
     c.callstartdate AS CREATED,
-    u.name AS agentName,
+    u.name AS agentID,
     COALESCE(
         hin.t1, 
         eng.t1, 
@@ -89,14 +89,14 @@ with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
     # Correct header
     writer.writerow([
         "ticketId", "phonenumber", "ftpPath", "fileName", "key1", "vendor", 
-        "callType", "callDuration", "ANI", "CREATED", "agentName", "fileSize", "T1", "midnumber"
+        "callType", "callDuration", "ANI", "CREATED", "agentID", "fileSize", "T1", "midnumber"
     ])
 
     # Write rows
     for row in records:
         (
             ticketId, phonenumber, ftpPath, fileName, key1, vendor,
-            callType, callDuration, ANI, CREATED, agentName, T1, midnumber
+            callType, callDuration, ANI, CREATED, agentID, T1, midnumber
         ) = row
 
         fileName = os.path.basename(fileName)
@@ -106,7 +106,7 @@ with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
 
         writer.writerow([
             ticketId, phonenumber, ftpPath, fileName, key1, vendor,
-            callType, callDuration, ANI, CREATED, agentName, fileSize, T1, midnumber
+            callType, callDuration, ANI, CREATED, agentID, fileSize, T1, midnumber
         ])
 
 # Close DB Connection

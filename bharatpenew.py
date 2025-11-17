@@ -28,14 +28,14 @@ query = """
 SELECT 
     c.uniqueid AS ticketId,
     c.phonenumber AS phonenumber,
-    CURRENT_DATE AS ftpPath,
+    TO_CHAR(CURRENT_DATE, 'YYYYMMDD') AS ftpPath,
     r.recfilename AS fileName,
     r.accountcode AS key1,
     'COGENT' AS vendor,
     c.calltype AS callType,
     c.callduration AS callDuration,
     c.phonenumber AS ANI,
-    c.callstartdate AS CREATED,
+    TO_CHAR(c.callstartdate, 'YYYYMMDD') AS CREATED,
     u.name AS agentID,
     COALESCE(
         hin.t1, 
@@ -75,7 +75,8 @@ LEFT JOIN malayalamin_1688622587882_history mal
     ON mal.accountcode = c.accountcode
 LEFT JOIN bengali_1688622587882_history ben
     ON ben.accountcode = c.accountcode
-WHERE r.eventdate::DATE = CURRENT_DATE;
+WHERE r.eventdate::DATE = CURRENT_DATE
+  AND c.calltype != 'IN';   -- EXCLUDE INBOUND CALLS
 """
 
 # Execute Query
@@ -102,7 +103,7 @@ with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
         fileName = os.path.basename(fileName)
         callType = "OUTBOUND" if callType == "OUT" else "INBOUND" if callType == "IN" else callType
         callDuration = str(timedelta(seconds=int(callDuration))) if callDuration else "00:00:00"
-        fileSize = ""  # Placeholder — can be filled later if needed
+        fileSize = ""  # Placeholder
 
         writer.writerow([
             ticketId, phonenumber, ftpPath, fileName, key1, vendor,
@@ -113,4 +114,4 @@ with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
 cursor.close()
 conn.close()
 
-print(f"✅ CSV file '{csv_file}' created successfully with T1 and midnumber columns.")
+print(f"✅ CSV file '{csv_file}' created successfully with T1 and midnumber columns, INBOUND excluded.")

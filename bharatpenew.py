@@ -35,7 +35,7 @@ SELECT
     c.calltype AS callType,
     c.callduration AS callDuration,
     c.phonenumber AS ANI,
-    TO_CHAR(c.callstartdate, 'YYYYMMDD') AS CREATED,
+    TO_CHAR(c.callstartdate, 'YYYY-MM-DD HH24:MI:SS') AS CREATED,
     u.name AS agentID,
     COALESCE(
         hin.t1, 

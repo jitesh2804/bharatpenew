@@ -16,7 +16,7 @@ db_params = {
 current_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 # CSV Filename
-csv_file = f"bharatpe_{current_timestamp}.csv"
+csv_file = f"bharatpehyd_{current_timestamp}.csv"
 
 # Connect to PostgreSQL
 conn = psycopg2.connect(**db_params)

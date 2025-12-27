@@ -40,17 +40,17 @@ SELECT
     NULL AS T1,
 
     COALESCE(
-        lgtel.midnumber, 
-        lgtam.midnumber, 
-        lgtelp2p3.midnumber, 
-        lgtamp2p3.midnumber, 
-        man.midnumber,
-        lgkan.midnumber, 
-        lgkanp2p3.midnumber, 
-        lenkan.midnumber, 
-        lentam.midnumber, 
-        lentel.midnumber
-    ) AS midnumber
+        lgtel.merchantid, 
+        lgtam.merchantid, 
+        lgtelp2p3.merchantid, 
+        lgtamp2p3.merchantid, 
+        man.merchantid,
+        lgkan.merchantid, 
+        lgkanp2p3.merchantid, 
+        lenkan.merchantid, 
+        lentam.merchantid, 
+        lentel.merchantid
+    ) AS merchantid
 
 FROM cr_recording_log r
 JOIN cr_conn_cdr c 
@@ -103,13 +103,13 @@ with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
 
     writer.writerow([
         "ticketId", "phonenumber", "ftpPath", "fileName", "key1", "vendor",
-        "callType", "callDuration", "ANI", "CREATED", "agentID", "fileSize", "T1", "midnumber"
+        "callType", "callDuration", "ANI", "CREATED", "agentID", "fileSize", "T1", "merchantid"
     ])
 
     for row in records:
         (
             ticketId, phonenumber, ftpPath, fileName, key1, vendor,
-            callType, callDuration, ANI, CREATED, agentID, T1, midnumber
+            callType, callDuration, ANI, CREATED, agentID, T1, merchantid
         ) = row
 
         fileName = os.path.basename(fileName)
@@ -119,11 +119,11 @@ with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
 
         writer.writerow([
             ticketId, phonenumber, ftpPath, fileName, key1, vendor,
-            callType, callDuration, ANI, CREATED, agentID, fileSize, T1, midnumber
+            callType, callDuration, ANI, CREATED, agentID, fileSize, T1, merchantid
         ])
 
 # Close DB Connection
 cursor.close()
 conn.close()
 
-print(f"✅ CSV file '{csv_file}' created successfully with ONLY new tables, midnumber populated, INBOUND excluded.")
+print(f"✅ CSV file '{csv_file}' created successfully with merchantid column populated, INBOUND excluded.")

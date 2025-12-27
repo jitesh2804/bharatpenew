@@ -37,18 +37,7 @@ SELECT
     TO_CHAR(c.callstartdate, 'YYYY-MM-DD HH24:MI:SS') AS CREATED,
     u.name AS agentID,
 
-    COALESCE(
-        lgtel.t1, 
-        lgtam.t1, 
-        lgtelp2p3.t1, 
-        lgtamp2p3.t1, 
-        man.t1,
-        lgkan.t1, 
-        lgkanp2p3.t1, 
-        lenkan.t1, 
-        lentam.t1, 
-        lentel.t1
-    ) AS T1,
+    NULL AS T1,
 
     COALESCE(
         lgtel.midnumber, 
@@ -70,7 +59,6 @@ JOIN cr_conn_cdr c
 LEFT JOIN ct_user u 
     ON c.agentid = u.id
 
--- ONLY NEW TABLES
 LEFT JOIN leadgenerationteluguhyd_1741691269141_history lgtel 
     ON lgtel.accountcode = c.accountcode
 
@@ -102,7 +90,7 @@ LEFT JOIN lendingteluguhyd_1741691269141_history lentel
     ON lentel.accountcode = c.accountcode
 
 WHERE r.eventdate::DATE = CURRENT_DATE
-  AND c.calltype != 'IN';   -- EXCLUDE INBOUND CALLS
+  AND c.calltype != 'IN';
 """
 
 # Execute Query
@@ -138,4 +126,4 @@ with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
 cursor.close()
 conn.close()
 
-print(f"✅ CSV file '{csv_file}' created successfully with ONLY new tables, T1 & midnumber populated, INBOUND excluded.")
+print(f"✅ CSV file '{csv_file}' created successfully with ONLY new tables, midnumber populated, INBOUND excluded.")

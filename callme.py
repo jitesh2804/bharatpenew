@@ -8,7 +8,7 @@ db_params = {
     "dbname": "verve",
     "user": "postgres",
     "password": "Avis!123",
-    "host": "192.168.160.229",
+    "host": "10.39.39.7",
     "port": "5433"
 }
 

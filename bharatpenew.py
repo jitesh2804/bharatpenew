@@ -25,6 +25,7 @@ try:
 
     query = f"""
     SELECT 
+        c.uniqueid AS ticketId,
         '{current_date}' AS ftpPath,
         r.recfilename AS fileName,
         r.accountcode AS key1,
@@ -36,8 +37,7 @@ try:
         c.agentid AS agentId,
         u.name AS agentName,
         c.dnis AS DNIS,
-        cam.name AS campaign,
-        c.uniqueid AS ticketId
+        cam.name AS campaign
     FROM cr_recording_log r
     JOIN cr_conn_cdr c 
         ON r.accountcode = c.accountcode 
@@ -56,14 +56,15 @@ try:
     with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
 
+        # Header (ticketId First)
         writer.writerow([
-            "ftpPath", "fileName", "key1", "vendor", "callType",
-            "callDuration", "ANI", "CREATED", "agentId",
-            "fileSize", "agentName", "DNIS", "campaign", "ticketId"
+            "ticketId", "ftpPath", "fileName", "key1", "vendor",
+            "callType", "callDuration", "ANI", "CREATED",
+            "agentId", "fileSize", "agentName", "DNIS", "campaign"
         ])
 
         for row in records:
-            ftpPath, fileName, key1, vendor, callType, callDuration, ANI, CREATED, agentId, agentName, DNIS, campaign, ticketId = row
+            ticketId, ftpPath, fileName, key1, vendor, callType, callDuration, ANI, CREATED, agentId, agentName, DNIS, campaign = row
 
             fileName = os.path.basename(fileName)
 
@@ -83,9 +84,9 @@ try:
             fileSize = ""
 
             writer.writerow([
-                ftpPath, fileName, key1, vendor, callType,
-                callDuration, ANI, CREATED, agentId,
-                fileSize, agentName, DNIS, campaign, ticketId
+                ticketId, ftpPath, fileName, key1, vendor,
+                callType, callDuration, ANI, CREATED,
+                agentId, fileSize, agentName, DNIS, campaign
             ])
 
     print(f"CSV file '{csv_file}' created successfully with {len(records)} records!")

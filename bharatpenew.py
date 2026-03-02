@@ -12,18 +12,17 @@ db_params = {
     "port": "5433"
 }
 
-# Get Current Date & Time
+# Date & Timestamp
 current_date = datetime.now().strftime("%Y%m%d")
 current_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-# Dynamic CSV File Name
+# CSV File Name
 csv_file = f"bharatpe_{current_timestamp}.csv"
 
 try:
     conn = psycopg2.connect(**db_params)
     cursor = conn.cursor()
 
-    # Updated Query (TicketId + Campaign Added)
     query = f"""
     SELECT 
         '{current_date}' AS ftpPath,
@@ -38,7 +37,7 @@ try:
         u.name AS agentName,
         c.dnis AS DNIS,
         cam.name AS campaign,
-        c.ticketid AS ticketId
+        c.uniqueid AS ticketId
     FROM cr_recording_log r
     JOIN cr_conn_cdr c 
         ON r.accountcode = c.accountcode 
@@ -57,7 +56,6 @@ try:
     with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
 
-        # Header (TicketId Added at Last)
         writer.writerow([
             "ftpPath", "fileName", "key1", "vendor", "callType",
             "callDuration", "ANI", "CREATED", "agentId",
@@ -69,13 +67,13 @@ try:
 
             fileName = os.path.basename(fileName)
 
-            # Convert callType
+            # Convert Call Type
             if callType == "OUT":
                 callType = "OUTBOUND"
             elif callType == "IN":
                 callType = "INBOUND"
 
-            # Convert duration
+            # Convert Duration
             if callDuration is not None:
                 seconds = int(callDuration)
                 callDuration = str(timedelta(seconds=seconds))

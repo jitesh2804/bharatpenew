@@ -20,11 +20,10 @@ current_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 csv_file = f"bharatpe_{current_timestamp}.csv"
 
 try:
-    # Connect to PostgreSQL
     conn = psycopg2.connect(**db_params)
     cursor = conn.cursor()
 
-    # Updated SQL Query (Campaign Added)
+    # Updated Query (TicketId + Campaign Added)
     query = f"""
     SELECT 
         '{current_date}' AS ftpPath,
@@ -38,7 +37,8 @@ try:
         c.agentid AS agentId,
         u.name AS agentName,
         c.dnis AS DNIS,
-        cam.name AS campaign
+        cam.name AS campaign,
+        c.ticketid AS ticketId
     FROM cr_recording_log r
     JOIN cr_conn_cdr c 
         ON r.accountcode = c.accountcode 
@@ -54,22 +54,19 @@ try:
     cursor.execute(query)
     records = cursor.fetchall()
 
-    # Write to CSV
     with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
 
-        # Header (Campaign Added at Last)
+        # Header (TicketId Added at Last)
         writer.writerow([
             "ftpPath", "fileName", "key1", "vendor", "callType",
             "callDuration", "ANI", "CREATED", "agentId",
-            "fileSize", "agentName", "DNIS", "campaign"
+            "fileSize", "agentName", "DNIS", "campaign", "ticketId"
         ])
 
-        # Data Rows
         for row in records:
-            ftpPath, fileName, key1, vendor, callType, callDuration, ANI, CREATED, agentId, agentName, DNIS, campaign = row
+            ftpPath, fileName, key1, vendor, callType, callDuration, ANI, CREATED, agentId, agentName, DNIS, campaign, ticketId = row
 
-            # Clean filename
             fileName = os.path.basename(fileName)
 
             # Convert callType
@@ -90,7 +87,7 @@ try:
             writer.writerow([
                 ftpPath, fileName, key1, vendor, callType,
                 callDuration, ANI, CREATED, agentId,
-                fileSize, agentName, DNIS, campaign
+                fileSize, agentName, DNIS, campaign, ticketId
             ])
 
     print(f"CSV file '{csv_file}' created successfully with {len(records)} records!")

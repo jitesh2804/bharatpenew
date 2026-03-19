@@ -3,7 +3,7 @@ import csv
 from datetime import datetime, timedelta
 import os
 
-# DB Connection
+# PostgreSQL Connection Details
 db_params = {
     "dbname": "verve",
     "user": "postgres",
@@ -12,10 +12,11 @@ db_params = {
     "port": "5433"
 }
 
-# Date & Time
+# Date & Timestamp
 current_date = datetime.now().strftime("%Y%m%d")
 current_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
+# CSV File Name
 csv_file = f"bharatpe_{current_timestamp}.csv"
 
 try:
@@ -33,23 +34,11 @@ try:
         c.callduration AS callDuration,
         c.phonenumber AS ANI,
         c.callstartdate AS CREATED,
-        u.name AS agentId,   -- ✅ agent name but column agentId
+        u.name AS agentName,
+        t.t1 AS t1,   -- 👈 NEW COLUMN
         c.dnis AS DNIS,
-        cam.name AS campaign,
-
-        CASE 
-            WHEN c.phonenumber = t1.englishin_1688622587882_history THEN 'ENGLISH'
-            WHEN c.phonenumber = t1.kannadain_1688622587882_history THEN 'KANNADA'
-            WHEN c.phonenumber = t1.malayalamin_1688622587882_history THEN 'MALAYALAM'
-            WHEN c.phonenumber = t1.hindiin_1688622587882_history THEN 'HINDI'
-            WHEN c.phonenumber = t1.tamilin_1688622587882 THEN 'TAMIL'
-            WHEN c.phonenumber = t1.teluguin_1688622587882 THEN 'TELUGU'
-            WHEN c.phonenumber = t1.bengali_1688622587882_histor THEN 'BENGALI'
-            ELSE ''
-        END AS language
-
+        cam.name AS campaign
     FROM cr_recording_log r
-
     JOIN cr_conn_cdr c 
         ON r.accountcode = c.accountcode 
         AND c.callstartdate::DATE = CURRENT_DATE  
@@ -60,16 +49,22 @@ try:
     LEFT JOIN ct_campaign cam
         ON c.campid = cam.id
 
-    LEFT JOIN your_table t1
-        ON c.phonenumber IN (
-            t1.englishin_1688622587882_history,
-            t1.kannadain_1688622587882_history,
-            t1.malayalamin_1688622587882_history,
-            t1.hindiin_1688622587882_history,
-            t1.tamilin_1688622587882,
-            t1.teluguin_1688622587882,
-            t1.bengali_1688622587882_histor
-        )
+    LEFT JOIN (
+        SELECT t1 FROM englishin_1688622587882_history
+        UNION ALL
+        SELECT t1 FROM kannadain_1688622587882_history
+        UNION ALL
+        SELECT t1 FROM malayalamin_1688622587882_history
+        UNION ALL
+        SELECT t1 FROM hindiin_1688622587882_history
+        UNION ALL
+        SELECT t1 FROM tamilin_1688622587882
+        UNION ALL
+        SELECT t1 FROM teluguin_1688622587882
+        UNION ALL
+        SELECT t1 FROM bengali_1688622587882_histor
+    ) t
+    ON c.phonenumber = t.t1
 
     WHERE r.eventdate::DATE = CURRENT_DATE
     AND c.calltype IN ('IN', 'OUT');
@@ -81,30 +76,28 @@ try:
     with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
 
+        # ✅ Header updated (t1 added)
         writer.writerow([
             "ticketId", "ftpPath", "fileName", "key1", "vendor",
             "callType", "callDuration", "ANI", "CREATED",
-            "agentId", "fileSize", "DNIS", "campaign", "language"
+            "agentName", "t1", "fileSize", "DNIS", "campaign"
         ])
 
         for row in records:
-            (
-                ticketId, ftpPath, fileName, key1, vendor,
-                callType, callDuration, ANI, CREATED,
-                agentId, DNIS, campaign, language
-            ) = row
+            ticketId, ftpPath, fileName, key1, vendor, callType, callDuration, ANI, CREATED, agentName, t1, DNIS, campaign = row
 
             fileName = os.path.basename(fileName)
 
-            # Call Type Convert
+            # Convert Call Type
             if callType == "OUT":
                 callType = "OUTBOUND"
             elif callType == "IN":
                 callType = "INBOUND"
 
-            # Duration Convert
-            if callDuration:
-                callDuration = str(timedelta(seconds=int(callDuration)))
+            # Convert Duration
+            if callDuration is not None:
+                seconds = int(callDuration)
+                callDuration = str(timedelta(seconds=seconds))
             else:
                 callDuration = "00:00:00"
 
@@ -113,7 +106,7 @@ try:
             writer.writerow([
                 ticketId, ftpPath, fileName, key1, vendor,
                 callType, callDuration, ANI, CREATED,
-                agentId, fileSize, DNIS, campaign, language
+                agentName, t1, fileSize, DNIS, campaign
             ])
 
     print(f"CSV file '{csv_file}' created successfully with {len(records)} records!")

@@ -58,11 +58,11 @@ try:
         UNION ALL
         SELECT t1 FROM hindiin_1688622587882_history
         UNION ALL
-        SELECT t1 FROM tamilin_1688622587882
+        SELECT t1 FROM tamilin_1688622587882_history
         UNION ALL
-        SELECT t1 FROM teluguin_1688622587882
+        SELECT t1 FROM teluguin_1688622587882_history
         UNION ALL
-        SELECT t1 FROM bengali_1688622587882_histor
+        SELECT t1 FROM bengali_1688622587882_history
     ) t
     ON c.phonenumber = t.t1
 

@@ -80,7 +80,7 @@ try:
         writer.writerow([
             "ticketId", "ftpPath", "fileName", "key1", "vendor",
             "callType", "callDuration", "ANI", "CREATED",
-            "agentID", "T1", "fileSize", "DNIS", "campaign"
+            "agentID", "T1", "fileSize", "DNIS", "campaign", "midnumber"
         ])
 
         for row in records:

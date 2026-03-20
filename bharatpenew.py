@@ -34,7 +34,7 @@ try:
         c.callduration AS callDuration,
         c.phonenumber AS ANI,
         c.callstartdate AS CREATED,
-        u.name AS agentName,
+        u.name AS agentID,
         t.t1 AS t1,   -- 👈 NEW COLUMN
         c.dnis AS DNIS,
         cam.name AS campaign
@@ -80,11 +80,11 @@ try:
         writer.writerow([
             "ticketId", "ftpPath", "fileName", "key1", "vendor",
             "callType", "callDuration", "ANI", "CREATED",
-            "agentName", "t1", "fileSize", "DNIS", "campaign"
+            "agentID", "t1", "fileSize", "DNIS", "campaign"
         ])
 
         for row in records:
-            ticketId, ftpPath, fileName, key1, vendor, callType, callDuration, ANI, CREATED, agentName, t1, DNIS, campaign = row
+            ticketId, ftpPath, fileName, key1, vendor, callType, callDuration, ANI, CREATED, agentID, t1, DNIS, campaign = row
 
             fileName = os.path.basename(fileName)
 
@@ -106,7 +106,7 @@ try:
             writer.writerow([
                 ticketId, ftpPath, fileName, key1, vendor,
                 callType, callDuration, ANI, CREATED,
-                agentName, t1, fileSize, DNIS, campaign
+                agentID, t1, fileSize, DNIS, campaign
             ])
 
     print(f"CSV file '{csv_file}' created successfully with {len(records)} records!")

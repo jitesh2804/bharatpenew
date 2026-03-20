@@ -102,6 +102,7 @@ try:
                 callDuration = "00:00:00"
 
             fileSize = ""
+            midnumber = ""
 
             writer.writerow([
                 ticketId, ftpPath, fileName, key1, vendor,

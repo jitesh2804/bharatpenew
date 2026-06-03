@@ -49,7 +49,7 @@ try:
         SELECT DISTINCT ON (phone1)
             phone1,
             ticketid
-        FROM bharatpespeakerslow_1688622587882_history
+        FROM bharatpespeakerslow_1688622587882
         WHERE phone1 IS NOT NULL
     ) crm
         ON c.phonenumber = crm.phone1

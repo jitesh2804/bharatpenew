@@ -29,7 +29,7 @@ try:
     WHEN COALESCE(crm.ticketid::text, c.uniqueid::text) ~ '^[0-9]{10,}$'
     THEN ''
     ELSE COALESCE(crm.ticketid::text, c.uniqueid::text)
-    END AS ticketId
+    END AS ticketId,
 
         '{current_date}' AS ftpPath,
         r.recfilename AS fileName,

@@ -26,11 +26,10 @@ try:
     query = f"""
     SELECT
         CASE
-            WHEN LENGTH(COALESCE(crm.ticketid::text, c.uniqueid::text)) = 10
-                 AND COALESCE(crm.ticketid::text, c.uniqueid::text) ~ '^[0-9]{10,12}$'
-            THEN ''
-            ELSE COALESCE(crm.ticketid::text, c.uniqueid::text)
-        END AS ticketId,
+    WHEN COALESCE(crm.ticketid::text, c.uniqueid::text) ~ '^[0-9]{10,}$'
+    THEN ''
+    ELSE COALESCE(crm.ticketid::text, c.uniqueid::text)
+    END AS ticketId
 
         '{current_date}' AS ftpPath,
         r.recfilename AS fileName,

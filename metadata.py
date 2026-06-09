@@ -26,10 +26,10 @@ try:
     query = f"""
     SELECT
         CASE
-    WHEN COALESCE(crm.ticketid::text, c.uniqueid::text) ~ '^[0-9]{10,}$'
-    THEN ''
-    ELSE COALESCE(crm.ticketid::text, c.uniqueid::text)
-    END AS ticketId,
+            WHEN COALESCE(crm.ticketid::text, c.uniqueid::text) ~ '^[0-9]{{10,}}$'
+            THEN ''
+            ELSE COALESCE(crm.ticketid::text, c.uniqueid::text)
+        END AS ticketId,
 
         '{current_date}' AS ftpPath,
         r.recfilename AS fileName,
@@ -50,7 +50,6 @@ try:
         ON r.accountcode = c.accountcode
         AND c.callstartdate::DATE = CURRENT_DATE
 
-    -- Fetch ticketid from CRM table using phone number
     LEFT JOIN (
         SELECT DISTINCT ON (phone1)
             phone1,
@@ -128,7 +127,13 @@ try:
                 campaign
             ) = row
 
-            # Keep only file name, remove full path
+            # Extra safety check in Python
+            ticketId = str(ticketId).strip() if ticketId else ""
+
+            if ticketId.isdigit() and len(ticketId) > 9:
+                ticketId = ""
+
+            # Keep only file name
             fileName = os.path.basename(fileName) if fileName else ""
 
             # Convert Call Type
@@ -137,12 +142,13 @@ try:
             elif callType == "IN":
                 callType = "INBOUND"
 
-            # Convert Duration from seconds to HH:MM:SS
+            # Convert Duration to HH:MM:SS
             if callDuration is not None:
                 try:
-                    seconds = int(callDuration)
-                    callDuration = str(timedelta(seconds=seconds))
-                except:
+                    callDuration = str(
+                        timedelta(seconds=int(callDuration))
+                    )
+                except Exception:
                     callDuration = "00:00:00"
             else:
                 callDuration = "00:00:00"
@@ -168,7 +174,10 @@ try:
                 midnumber
             ])
 
-    print(f"CSV file '{csv_file}' created successfully with {len(records)} records!")
+    print(
+        f"CSV file '{csv_file}' created successfully "
+        f"with {len(records)} records!"
+    )
 
 except Exception as e:
     print("Error:", e)

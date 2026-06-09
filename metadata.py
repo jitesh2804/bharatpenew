@@ -25,7 +25,13 @@ try:
 
     query = f"""
     SELECT
-        COALESCE(crm.ticketid::text, c.uniqueid::text) AS ticketId,
+        CASE
+            WHEN LENGTH(COALESCE(crm.ticketid::text, c.uniqueid::text)) = 10
+                 AND COALESCE(crm.ticketid::text, c.uniqueid::text) ~ '^[0-9]+$'
+            THEN ''
+            ELSE COALESCE(crm.ticketid::text, c.uniqueid::text)
+        END AS ticketId,
+
         '{current_date}' AS ftpPath,
         r.recfilename AS fileName,
         r.accountcode AS key1,
@@ -38,6 +44,7 @@ try:
         t.t1 AS T1,
         c.dnis AS DNIS,
         cam.name AS campaign
+
     FROM cr_recording_log r
 
     JOIN cr_conn_cdr c
@@ -122,7 +129,8 @@ try:
                 campaign
             ) = row
 
-            fileName = os.path.basename(fileName)
+            # Keep only file name, remove full path
+            fileName = os.path.basename(fileName) if fileName else ""
 
             # Convert Call Type
             if callType == "OUT":
@@ -130,10 +138,13 @@ try:
             elif callType == "IN":
                 callType = "INBOUND"
 
-            # Convert Duration
+            # Convert Duration from seconds to HH:MM:SS
             if callDuration is not None:
-                seconds = int(callDuration)
-                callDuration = str(timedelta(seconds=seconds))
+                try:
+                    seconds = int(callDuration)
+                    callDuration = str(timedelta(seconds=seconds))
+                except:
+                    callDuration = "00:00:00"
             else:
                 callDuration = "00:00:00"
 

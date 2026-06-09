@@ -26,7 +26,7 @@ try:
     query = f"""
     SELECT
         CASE
-            WHEN LENGTH(COALESCE(crm.ticketid::text, c.uniqueid::text)) = 10
+            WHEN LENGTH(COALESCE(crm.ticketid::text, c.uniqueid::text)) = 13
                  AND COALESCE(crm.ticketid::text, c.uniqueid::text) ~ '^[0-9]+$'
             THEN ''
             ELSE COALESCE(crm.ticketid::text, c.uniqueid::text)

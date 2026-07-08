@@ -42,7 +42,9 @@ try:
         u.name AS agentID,
         t.t1 AS T1,
         c.dnis AS DNIS,
-        cam.name AS campaign
+        cam.name AS campaign,
+        d.type AS disposition_type,
+        d.name AS disposition_name
 
     FROM cr_recording_log r
 
@@ -58,7 +60,9 @@ try:
         WHERE phone1 IS NOT NULL
     ) crm
         ON c.phonenumber = crm.phone1
-
+    LEFT JOIN ct_dispositions d
+    ON c.dispoid = d.id
+    
     LEFT JOIN ct_user u
         ON c.agentid = u.id
 
@@ -107,7 +111,9 @@ try:
             "fileSize",
             "DNIS",
             "campaign",
-            "midnumber"
+            "midnumber",
+            "Disposition Type",
+            "Disposition Name"
         ])
 
         for row in records:
@@ -124,7 +130,9 @@ try:
                 agentID,
                 T1,
                 DNIS,
-                campaign
+                campaign,
+                disposition_type,
+                disposition_name
             ) = row
 
             # Extra safety check in Python
@@ -171,7 +179,9 @@ try:
                 fileSize,
                 DNIS,
                 campaign,
-                midnumber
+                midnumber,
+                disposition_type if disposition_type else "",
+                disposition_name if disposition_name else ""
             ])
 
     print(

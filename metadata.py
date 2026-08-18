@@ -16,26 +16,38 @@ db_params = {
 }
 
 # ============================================================
-# Fixed Report Date
+# REPORT DATE
+# Change only this date whenever required
+# Format: YYYYMMDD
 # ============================================================
 
 REPORT_DATE = "20260816"
 
+# Convert report date
 report_date = datetime.strptime(REPORT_DATE, "%Y%m%d")
+
+# Next day for SQL upper boundary
 next_date = report_date + timedelta(days=1)
 
-# SQL Date Range
+# SQL date format
 report_date_sql = report_date.strftime("%Y-%m-%d")
 next_date_sql = next_date.strftime("%Y-%m-%d")
 
 # FTP Path
 report_date_yyyymmdd = report_date.strftime("%Y%m%d")
 
-# Current run time only HHMMSS
+# Current execution time
 current_time = datetime.now().strftime("%H%M%S")
 
+# ============================================================
 # CSV Filename
-csv_file = f"bharatpe_{report_date_yyyymmdd}_{current_time}.csv"# Database Connection Variables
+# Example: bharatpe_20260816_043609.csv
+# ============================================================
+
+csv_file = f"bharatpe_{report_date_yyyymmdd}_{current_time}.csv"
+
+# ============================================================
+# Database Variables
 # ============================================================
 
 conn = None
@@ -43,17 +55,27 @@ cursor = None
 
 try:
 
+    print("=" * 70)
+    print("BHARATPE RECORDING REPORT")
+    print("=" * 70)
+
+    print(f"Report Date : {report_date_sql}")
+    print(f"Next Date   : {next_date_sql}")
+    print(f"FTP Path    : {report_date_yyyymmdd}")
+    print(f"CSV File    : {csv_file}")
+
+    print("")
     print("Connecting to PostgreSQL...")
+
+    # ========================================================
+    # Database Connection
+    # ========================================================
 
     conn = psycopg2.connect(**db_params)
 
     cursor = conn.cursor()
 
     print("Database connected successfully.")
-
-    print(f"Report Date : {report_date_sql}")
-    print(f"FTP Path    : {report_date_yyyymmdd}")
-    print(f"CSV File    : {csv_file}")
 
     # ========================================================
     # SQL Query
@@ -62,8 +84,10 @@ try:
     query = """
     SELECT
         CASE
-            WHEN COALESCE(crm.ticketid::text, c.uniqueid::text)
-                 ~ '^[0-9]{10,}$'
+            WHEN COALESCE(
+                crm.ticketid::text,
+                c.uniqueid::text
+            ) ~ '^[0-9]{10,}$'
             THEN ''
             ELSE COALESCE(
                 crm.ticketid::text,
@@ -102,14 +126,20 @@ try:
     FROM cr_recording_log r
 
     INNER JOIN cr_conn_cdr c
+
         ON r.accountcode = c.accountcode
 
         AND c.callstartdate >= %s::timestamp
+
         AND c.callstartdate < %s::timestamp
 
+
     LEFT JOIN (
+
         SELECT DISTINCT ON (phone1)
+
             phone1,
+
             ticketid
 
         FROM bharatpespeakerslow_1688622587882
@@ -193,14 +223,17 @@ try:
     # Execute Query
     # ========================================================
 
+    print("")
+    print("Fetching records...")
+
     cursor.execute(
         query,
         (
             report_date_yyyymmdd,
             report_date_sql,
-            today_sql,
+            next_date_sql,
             report_date_sql,
-            today_sql
+            next_date_sql
         )
     )
 
@@ -209,8 +242,11 @@ try:
     print(f"Total records fetched: {len(records)}")
 
     # ========================================================
-    # Create CSV File
+    # Create CSV
     # ========================================================
+
+    print("")
+    print("Creating CSV file...")
 
     with open(
         csv_file,
@@ -246,7 +282,7 @@ try:
         ])
 
         # ====================================================
-        # Write Records
+        # Process Records
         # ====================================================
 
         for row in records:
@@ -270,7 +306,7 @@ try:
             ) = row
 
             # =================================================
-            # Ticket ID Safety Check
+            # Ticket ID
             # =================================================
 
             ticketId = (
@@ -279,35 +315,39 @@ try:
                 else ""
             )
 
-            # Remove numeric Ticket IDs >= 10 digits
+            # Remove ticketId if numeric and >= 10 digits
             if ticketId.isdigit() and len(ticketId) >= 10:
                 ticketId = ""
 
             # =================================================
-            # Recording File Name
+            # File Name
             # =================================================
 
-            if fileName:
-                fileName = os.path.basename(fileName)
-            else:
-                fileName = ""
+            fileName = (
+                os.path.basename(fileName)
+                if fileName
+                else ""
+            )
 
             # =================================================
-            # Call Type Conversion
+            # Call Type
             # =================================================
 
             if callType == "OUT":
+
                 callType = "OUTBOUND"
 
             elif callType == "IN":
+
                 callType = "INBOUND"
 
             else:
+
                 callType = callType or ""
 
             # =================================================
-            # Call Duration Conversion
-            # Seconds -> HH:MM:SS
+            # Call Duration
+            # Convert seconds to HH:MM:SS
             # =================================================
 
             if callDuration is not None:
@@ -343,7 +383,7 @@ try:
                 callDuration = "00:00:00"
 
             # =================================================
-            # Created Date Formatting
+            # CREATED Date
             # =================================================
 
             if CREATED:
@@ -371,7 +411,7 @@ try:
             midnumber = ""
 
             # =================================================
-            # Write CSV Row
+            # Write CSV
             # =================================================
 
             writer.writerow([
@@ -395,44 +435,39 @@ try:
             ])
 
     # ========================================================
-    # Success Message
+    # Completed
     # ========================================================
 
     print("")
-    print("=" * 60)
+    print("=" * 70)
     print("CSV CREATED SUCCESSFULLY")
-    print("=" * 60)
+    print("=" * 70)
 
-    print(
-        f"Report Date   : {report_date_sql}"
-    )
+    print(f"Report Date   : {report_date_sql}")
+    print(f"FTP Path      : {report_date_yyyymmdd}")
+    print(f"Total Records : {len(records)}")
+    print(f"CSV File      : {csv_file}")
 
-    print(
-        f"FTP Path      : {report_date_yyyymmdd}"
-    )
-
-    print(
-        f"Total Records : {len(records)}"
-    )
-
-    print(
-        f"CSV File      : {csv_file}"
-    )
-
-    print("=" * 60)
+    print("=" * 70)
 
 
 except psycopg2.Error as db_error:
 
     print("")
-    print("PostgreSQL Error:")
+    print("=" * 70)
+    print("POSTGRESQL ERROR")
+    print("=" * 70)
+
     print(db_error)
 
 
 except Exception as e:
 
     print("")
-    print("Error:")
+    print("=" * 70)
+    print("ERROR")
+    print("=" * 70)
+
     print(e)
 
 
@@ -445,21 +480,25 @@ finally:
     if cursor is not None:
 
         try:
+
             cursor.close()
 
         except Exception:
+
             pass
 
     # ========================================================
-    # Close Connection
+    # Close Database Connection
     # ========================================================
 
     if conn is not None:
 
         try:
+
             conn.close()
 
         except Exception:
+
             pass
 
     print("")

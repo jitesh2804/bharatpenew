@@ -3,7 +3,10 @@ import csv
 from datetime import datetime, timedelta
 import os
 
+# ============================================================
 # PostgreSQL Connection Details
+# ============================================================
+
 db_params = {
     "dbname": "verve",
     "user": "postgres",
@@ -12,89 +15,219 @@ db_params = {
     "port": "5433"
 }
 
-# Date & Timestamp
-current_date = datetime.now().strftime("%Y%m%d")
-current_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+# ============================================================
+# Day -1 / Yesterday Date
+# ============================================================
+
+now = datetime.now()
+
+report_date = now - timedelta(days=1)
+
+# FTP Path format: YYYYMMDD
+report_date_yyyymmdd = report_date.strftime("%Y%m%d")
+
+# SQL date format: YYYY-MM-DD
+report_date_sql = report_date.strftime("%Y-%m-%d")
+
+# Today SQL date - used as upper boundary
+today_sql = now.strftime("%Y-%m-%d")
+
+# CSV file timestamp
+current_timestamp = now.strftime("%Y%m%d_%H%M%S")
 
 # CSV File Name
-csv_file = f"bharatpe_{current_timestamp}.csv"
+csv_file = f"bharatpe_{report_date_yyyymmdd}_{current_timestamp}.csv"
+
+# ============================================================
+# Database Connection Variables
+# ============================================================
+
+conn = None
+cursor = None
 
 try:
+
+    print("Connecting to PostgreSQL...")
+
     conn = psycopg2.connect(**db_params)
+
     cursor = conn.cursor()
 
-    query = f"""
+    print("Database connected successfully.")
+
+    print(f"Report Date : {report_date_sql}")
+    print(f"FTP Path    : {report_date_yyyymmdd}")
+    print(f"CSV File    : {csv_file}")
+
+    # ========================================================
+    # SQL Query
+    # ========================================================
+
+    query = """
     SELECT
         CASE
-            WHEN COALESCE(crm.ticketid::text, c.uniqueid::text) ~ '^[0-9]{{10,}}$'
+            WHEN COALESCE(crm.ticketid::text, c.uniqueid::text)
+                 ~ '^[0-9]{10,}$'
             THEN ''
-            ELSE COALESCE(crm.ticketid::text, c.uniqueid::text)
+            ELSE COALESCE(
+                crm.ticketid::text,
+                c.uniqueid::text
+            )
         END AS ticketId,
 
-        '{current_date}' AS ftpPath,
+        %s AS ftpPath,
+
         r.recfilename AS fileName,
+
         r.accountcode AS key1,
+
         'COGENT' AS vendor,
+
         c.calltype AS callType,
+
         c.callduration AS callDuration,
+
         c.phonenumber AS ANI,
+
         c.callstartdate AS CREATED,
+
         u.name AS agentID,
+
         t.t1 AS T1,
+
         c.dnis AS DNIS,
+
         cam.name AS campaign,
+
         d.type AS disposition_type,
+
         d.name AS disposition_name
 
     FROM cr_recording_log r
 
-    JOIN cr_conn_cdr c
+    INNER JOIN cr_conn_cdr c
         ON r.accountcode = c.accountcode
-        AND c.callstartdate::DATE = CURRENT_DATE
+
+        AND c.callstartdate >= %s::timestamp
+        AND c.callstartdate < %s::timestamp
 
     LEFT JOIN (
         SELECT DISTINCT ON (phone1)
             phone1,
             ticketid
+
         FROM bharatpespeakerslow_1688622587882
+
         WHERE phone1 IS NOT NULL
+
+        ORDER BY phone1
+
     ) crm
+
         ON c.phonenumber = crm.phone1
+
+
     LEFT JOIN ct_dispositions d
-    ON c.dispoid = d.id
-    
+
+        ON c.dispoid = d.id
+
+
     LEFT JOIN ct_user u
+
         ON c.agentid = u.id
 
+
     LEFT JOIN ct_campaign cam
+
         ON c.campid = cam.id
 
+
     LEFT JOIN (
-        SELECT t1 FROM englishin_1688622587882_history
+
+        SELECT t1
+        FROM englishin_1688622587882_history
+
         UNION ALL
-        SELECT t1 FROM kannadain_1688622587882_history
+
+        SELECT t1
+        FROM kannadain_1688622587882_history
+
         UNION ALL
-        SELECT t1 FROM malayalamin_1688622587882_history
+
+        SELECT t1
+        FROM malayalamin_1688622587882_history
+
         UNION ALL
-        SELECT t1 FROM hindiin_1688622587882_history
+
+        SELECT t1
+        FROM hindiin_1688622587882_history
+
         UNION ALL
-        SELECT t1 FROM tamilin_1688622587882_history
+
+        SELECT t1
+        FROM tamilin_1688622587882_history
+
         UNION ALL
-        SELECT t1 FROM teluguin_1688622587882_history
+
+        SELECT t1
+        FROM teluguin_1688622587882_history
+
         UNION ALL
-        SELECT t1 FROM bengali_1688622587882_history
+
+        SELECT t1
+        FROM bengali_1688622587882_history
+
     ) t
+
         ON c.phonenumber = t.t1
 
-    WHERE r.eventdate::DATE = CURRENT_DATE
-      AND c.calltype IN ('IN', 'OUT');
+
+    WHERE
+
+        r.eventdate >= %s::timestamp
+
+        AND r.eventdate < %s::timestamp
+
+        AND c.calltype IN ('IN', 'OUT')
+
+    ORDER BY c.callstartdate ASC;
     """
 
-    cursor.execute(query)
+    # ========================================================
+    # Execute Query
+    # ========================================================
+
+    cursor.execute(
+        query,
+        (
+            report_date_yyyymmdd,
+            report_date_sql,
+            today_sql,
+            report_date_sql,
+            today_sql
+        )
+    )
+
     records = cursor.fetchall()
 
-    with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
+    print(f"Total records fetched: {len(records)}")
+
+    # ========================================================
+    # Create CSV File
+    # ========================================================
+
+    with open(
+        csv_file,
+        mode="w",
+        newline="",
+        encoding="utf-8"
+    ) as file:
+
         writer = csv.writer(file)
+
+        # ====================================================
+        # CSV Header
+        # ====================================================
 
         writer.writerow([
             "ticketId",
@@ -116,7 +249,12 @@ try:
             "Disposition Name"
         ])
 
+        # ====================================================
+        # Write Records
+        # ====================================================
+
         for row in records:
+
             (
                 ticketId,
                 ftpPath,
@@ -135,66 +273,198 @@ try:
                 disposition_name
             ) = row
 
-            # Extra safety check in Python
-            ticketId = str(ticketId).strip() if ticketId else ""
+            # =================================================
+            # Ticket ID Safety Check
+            # =================================================
 
-            if ticketId.isdigit() and len(ticketId) > 9:
+            ticketId = (
+                str(ticketId).strip()
+                if ticketId
+                else ""
+            )
+
+            # Remove numeric Ticket IDs >= 10 digits
+            if ticketId.isdigit() and len(ticketId) >= 10:
                 ticketId = ""
 
-            # Keep only file name
-            fileName = os.path.basename(fileName) if fileName else ""
+            # =================================================
+            # Recording File Name
+            # =================================================
 
-            # Convert Call Type
+            if fileName:
+                fileName = os.path.basename(fileName)
+            else:
+                fileName = ""
+
+            # =================================================
+            # Call Type Conversion
+            # =================================================
+
             if callType == "OUT":
                 callType = "OUTBOUND"
+
             elif callType == "IN":
                 callType = "INBOUND"
 
-            # Convert Duration to HH:MM:SS
-            if callDuration is not None:
-                try:
-                    callDuration = str(
-                        timedelta(seconds=int(callDuration))
-                    )
-                except Exception:
-                    callDuration = "00:00:00"
             else:
+                callType = callType or ""
+
+            # =================================================
+            # Call Duration Conversion
+            # Seconds -> HH:MM:SS
+            # =================================================
+
+            if callDuration is not None:
+
+                try:
+
+                    total_seconds = int(float(callDuration))
+
+                    hours = total_seconds // 3600
+
+                    minutes = (
+                        total_seconds % 3600
+                    ) // 60
+
+                    seconds = total_seconds % 60
+
+                    callDuration = (
+                        f"{hours:02d}:"
+                        f"{minutes:02d}:"
+                        f"{seconds:02d}"
+                    )
+
+                except (
+                    ValueError,
+                    TypeError,
+                    OverflowError
+                ):
+
+                    callDuration = "00:00:00"
+
+            else:
+
                 callDuration = "00:00:00"
 
+            # =================================================
+            # Created Date Formatting
+            # =================================================
+
+            if CREATED:
+
+                try:
+
+                    CREATED = CREATED.strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+
+                except Exception:
+
+                    CREATED = str(CREATED)
+
+            else:
+
+                CREATED = ""
+
+            # =================================================
+            # Empty Fields
+            # =================================================
+
             fileSize = ""
+
             midnumber = ""
+
+            # =================================================
+            # Write CSV Row
+            # =================================================
 
             writer.writerow([
                 ticketId,
-                ftpPath,
+                ftpPath or "",
                 fileName,
-                key1,
+                key1 or "",
                 vendor,
                 callType,
                 callDuration,
-                ANI,
+                ANI or "",
                 CREATED,
-                agentID,
-                T1,
+                agentID or "",
+                T1 or "",
                 fileSize,
-                DNIS,
-                campaign,
+                DNIS or "",
+                campaign or "",
                 midnumber,
-                disposition_type if disposition_type else "",
-                disposition_name if disposition_name else ""
+                disposition_type or "",
+                disposition_name or ""
             ])
 
+    # ========================================================
+    # Success Message
+    # ========================================================
+
+    print("")
+    print("=" * 60)
+    print("CSV CREATED SUCCESSFULLY")
+    print("=" * 60)
+
     print(
-        f"CSV file '{csv_file}' created successfully "
-        f"with {len(records)} records!"
+        f"Report Date   : {report_date_sql}"
     )
 
+    print(
+        f"FTP Path      : {report_date_yyyymmdd}"
+    )
+
+    print(
+        f"Total Records : {len(records)}"
+    )
+
+    print(
+        f"CSV File      : {csv_file}"
+    )
+
+    print("=" * 60)
+
+
+except psycopg2.Error as db_error:
+
+    print("")
+    print("PostgreSQL Error:")
+    print(db_error)
+
+
 except Exception as e:
-    print("Error:", e)
+
+    print("")
+    print("Error:")
+    print(e)
+
 
 finally:
-    if 'cursor' in locals():
-        cursor.close()
 
-    if 'conn' in locals():
-        conn.close()
+    # ========================================================
+    # Close Cursor
+    # ========================================================
+
+    if cursor is not None:
+
+        try:
+            cursor.close()
+
+        except Exception:
+            pass
+
+    # ========================================================
+    # Close Connection
+    # ========================================================
+
+    if conn is not None:
+
+        try:
+            conn.close()
+
+        except Exception:
+            pass
+
+    print("")
+    print("Database connection closed.")

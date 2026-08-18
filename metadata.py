@@ -21,7 +21,7 @@ db_params = {
 # Format: YYYYMMDD
 # ============================================================
 
-REPORT_DATE = "20260816"
+REPORT_DATE = "20260811"
 
 # Convert report date
 report_date = datetime.strptime(REPORT_DATE, "%Y%m%d")

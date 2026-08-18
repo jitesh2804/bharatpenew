@@ -16,29 +16,26 @@ db_params = {
 }
 
 # ============================================================
-# Fixed Report Date: 16 August 2026
+# Fixed Report Date
 # ============================================================
 
-now = datetime.now()
+REPORT_DATE = "20260816"
 
-report_date = datetime.strptime("20260816", "%Y%m%d")
-
-# Start: 2026-08-16 00:00:00
-report_date_sql = report_date.strftime("%Y-%m-%d")
-
-# End: 2026-08-17 00:00:00
+report_date = datetime.strptime(REPORT_DATE, "%Y%m%d")
 next_date = report_date + timedelta(days=1)
-today_sql = next_date.strftime("%Y-%m-%d")
+
+# SQL Date Range
+report_date_sql = report_date.strftime("%Y-%m-%d")
+next_date_sql = next_date.strftime("%Y-%m-%d")
 
 # FTP Path
 report_date_yyyymmdd = report_date.strftime("%Y%m%d")
 
-# CSV timestamp
-current_timestamp = now.strftime("%Y%m%d_%H%M%S")
+# Current run time only HHMMSS
+current_time = datetime.now().strftime("%H%M%S")
 
-# CSV filename
-csv_file = f"bharatpe_{report_date_yyyymmdd}_{current_timestamp}.csv"# ============================================================
-# Database Connection Variables
+# CSV Filename
+csv_file = f"bharatpe_{report_date_yyyymmdd}_{current_time}.csv"# Database Connection Variables
 # ============================================================
 
 conn = None

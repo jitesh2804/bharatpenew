@@ -16,15 +16,10 @@ db_params = {
 }
 
 # ============================================================
-# REPORT DATE
-# Change only this date whenever required
-# Format: YYYYMMDD
+# REPORT DATE - AUTOMATIC DAY -1
 # ============================================================
 
-REPORT_DATE = "20260818"
-
-# Convert report date
-report_date = datetime.strptime(REPORT_DATE, "%Y%m%d")
+report_date = datetime.now() - timedelta(days=1)
 
 # Next day for SQL upper boundary
 next_date = report_date + timedelta(days=1)
@@ -41,7 +36,7 @@ current_time = datetime.now().strftime("%H%M%S")
 
 # ============================================================
 # CSV Filename
-# Example: bharatpe_20260816_043609.csv
+# Example: bharatpe_20260818_043609.csv
 # ============================================================
 
 csv_file = f"bharatpe_{report_date_yyyymmdd}_{current_time}.csv"
